@@ -410,7 +410,9 @@ function screenrecord() {
 	trap on_sigint SIGINT
 
 	touch ~/.config/owo/gif.pid
+	if ! [ is_mac ]; then
 	read -r X Y W H G ID < <(slop -f "%x %y %w %h %g %i" -q)
+	fi
 	if [ -z "$X" ]; then
 		echo "Cancelled..."
 		exit 1
@@ -420,8 +422,11 @@ function screenrecord() {
 	if [ "$cap_cursor" = "true" ]; then
 		CAPTURE_CURSOR=1
 	fi
-        if is_mac(); then
-	ffmpeg -f avfoundation -i "default:default" -codec:v huffyuv "$TMP_AVI"
+        if is_mac; then
+	ffmpeg -loglevel warning -y -f avfoundation -i "default:default" \
+		-draw_mouse "$CAPTURE_CURSOR" \
+		-s "$W"x"$H" -i :0.0+"$X","$Y" -codec:v huffyuv   \
+		-vf crop="iw-mod(iw\\,2):ih-mod(ih\\,2)" "$TMP_AVI" &
 	else
 	
 	ffmpeg -loglevel warning -y -f x11grab -show_region 1 -framerate 15 \
